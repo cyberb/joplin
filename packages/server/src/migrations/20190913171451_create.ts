@@ -96,26 +96,28 @@ export const up = async (db: DbConnection) => {
 	const adminRootFileId = uuidgen();
 	const now = Date.now();
 
-	await db('users').insert({
-		id: adminId,
-		email: defaultAdminEmail,
-		password: await hashPassword(config().defaultAdminPassword),
-		full_name: 'Admin',
-		is_admin: 1,
-		updated_time: now,
-		created_time: now,
-	});
+	if (config().LOCAL_AUTH_ENABLED) {
+		await db('users').insert({
+			id: adminId,
+			email: defaultAdminEmail,
+			password: await hashPassword(config().defaultAdminPassword),
+			full_name: 'Admin',
+			is_admin: 1,
+			updated_time: now,
+			created_time: now,
+		});
 
-	await db('files').insert({
-		id: adminRootFileId,
-		owner_id: adminId,
-		name: adminRootFileId,
-		size: 0,
-		is_directory: 1,
-		is_root: 1,
-		updated_time: now,
-		created_time: now,
-	});
+		await db('files').insert({
+			id: adminRootFileId,
+			owner_id: adminId,
+			name: adminRootFileId,
+			size: 0,
+			is_directory: 1,
+			is_root: 1,
+			updated_time: now,
+			created_time: now,
+		});
+	}
 
 	await db('api_clients').insert({
 		id: uuidgen(),
