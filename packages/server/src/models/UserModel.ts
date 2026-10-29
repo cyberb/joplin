@@ -245,7 +245,7 @@ export default class UserModel extends BaseModel<User> {
 		return user;
 	}
 
-	public async ssoLogin(email: string, displayName: string, _services: Services) {
+	public async ssoLogin(email: string, displayName: string, _services: Services, isAdmin?: boolean) {
 		if (!email || !displayName) {
 			return null;
 		}
@@ -265,9 +265,13 @@ export default class UserModel extends BaseModel<User> {
 				email_confirmed: 1,
 				is_external: 1,
 				password: '',
+				...(isAdmin === undefined ? {} : { is_admin: isAdmin ? 1 : 0 }),
 			};
 
 			user = await this.save(user, { skipValidation: true });
+		} else if (isAdmin !== undefined && !!user.is_admin !== isAdmin) {
+			user = await this.save({ id: user.id, is_admin: isAdmin ? 1 : 0 }, { skipValidation: true });
+			user = await this.load(user.id);
 		}
 
 		return user;

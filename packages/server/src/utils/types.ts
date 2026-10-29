@@ -153,6 +153,16 @@ export interface SamlConfig {
 	organizationDisplayName: string;
 }
 
+export interface OidcConfig {
+	enabled: boolean;
+	issuerUrl: string;
+	issuerSocket: string;
+	clientId: string;
+	clientSecret: string;
+	adminGroup: string;
+	organizationDisplayName: string;
+}
+
 export interface Config extends EnvVariables {
 	appVersion: string;
 	joplinServerVersion: string; // May be different from appVersion, if this is a fork of JS
@@ -195,6 +205,7 @@ export interface Config extends EnvVariables {
 	maxTimeDrift: number;
 	ldap: LdapConfig[];
 	saml: SamlConfig;
+	oidc: OidcConfig;
 }
 
 export enum HttpMethod {
@@ -218,6 +229,7 @@ export interface CommandContext {
 }
 
 export type SamlRelayState = 'web-login' | 'app-login' | null;
+export type OidcRelayState = 'web-login' | 'app-login';
 export interface SamlPostResponse {
 	SAMLResponse: string;
 	RelayState?: SamlRelayState;

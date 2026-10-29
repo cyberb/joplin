@@ -10,6 +10,7 @@ import limiterLoginBruteForce from '../../utils/request/limiterLoginBruteForce';
 import { cookieSet } from '../../utils/cookies';
 import { adminDashboardUrl, applicationsConfirmUrl, homeUrl } from '../../utils/urlUtils';
 import { generateRedirectHtml } from '../../utils/saml';
+import { startLogin } from '../../utils/oidc';
 import { ErrorForbidden } from '../../utils/errors';
 
 type LoginViewContentOptions = {
@@ -37,6 +38,8 @@ function makeView(error: Error | null = null, fields?: LoginInputFields, viewCon
 		showRecoveryCodeInput: viewContentOptions?.showRecoveryCodeInput,
 		samlEnabled: config().saml.enabled,
 		samlOrganizationName: config().saml.enabled && config().saml.organizationDisplayName ? config().saml.organizationDisplayName : undefined,
+		oidcEnabled: config().oidc.enabled,
+		oidcOrganizationName: config().oidc.enabled && config().oidc.organizationDisplayName ? config().oidc.organizationDisplayName : undefined,
 	};
 	return view;
 }
@@ -79,10 +82,18 @@ router.get('login', async (_path: SubPath, ctx: AppContext, fields: LoginInputFi
 		return redirect(ctx, getRedirectUrl(ctx.joplin.owner.is_admin, fields.applicationAuthId));
 	}
 
+	if (config().oidc.enabled && !config().LOCAL_AUTH_ENABLED && !fields.applicationAuthId) {
+		return await startLogin(ctx, 'web-login');
+	}
+
 	return makeView(null, fields, viewContentOptions);
 });
 
-router.post('login', async (_path: SubPath, _ctx: AppContext) => {
+router.post('login', async (_path: SubPath, ctx: AppContext) => {
+	if (!config().LOCAL_AUTH_ENABLED && config().oidc.enabled) {
+		return await startLogin(ctx, 'web-login');
+	}
+
 	if (!config().LOCAL_AUTH_ENABLED) {
 		return await generateRedirectHtml('web-login');
 	}
@@ -92,12 +103,16 @@ router.post('login', async (_path: SubPath, _ctx: AppContext) => {
 
 // Log in using external authentication.
 router.get('login/:id', async (path: SubPath, ctx: AppContext) => {
-	if (!config().saml.enabled) throw new ErrorForbidden('SAML not enabled');
+	if (!config().saml.enabled && !config().oidc.enabled) throw new ErrorForbidden('SSO not enabled');
 
 	if (config().saml.enabled && path.id === 'sso-saml') { // Server page, SAML
 		return await generateRedirectHtml('web-login');
 	} else if (config().saml.enabled && path.id === 'sso-saml-app') { // Client, SAML
 		return await generateRedirectHtml('app-login');
+	} else if (config().oidc.enabled && path.id === 'sso-oidc') {
+		return await startLogin(ctx, 'web-login');
+	} else if (config().oidc.enabled && (path.id === 'sso-oidc-app' || path.id === 'sso-saml-app')) {
+		return await startLogin(ctx, 'app-login');
 	} else if (ctx.joplin.owner) { // Already logged-in
 		return redirect(ctx, homeUrl());
 	} else {

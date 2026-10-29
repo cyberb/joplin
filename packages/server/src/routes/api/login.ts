@@ -2,6 +2,7 @@ import config from '../../config';
 import Router from '../../utils/Router';
 import { redirect, SubPath } from '../../utils/routeUtils';
 import { generateRedirectHtml, getIdentityProvider, getServiceProvider } from '../../utils/saml';
+import { finishLogin, isAdmin } from '../../utils/oidc';
 import { AppContext, RouteType, SamlPostResponse } from '../../utils/types';
 import { bodyFields, userIp } from '../../utils/requestUtils';
 import { ErrorBadRequest, ErrorForbidden } from '../../utils/errors';
@@ -73,6 +74,30 @@ router.post('api/saml', async (_path: SubPath, ctx: AppContext) => {
 
 		return { code: user.sso_auth_code };
 	}
+});
+
+router.get('api/oidc', async (_path: SubPath, ctx: AppContext) => {
+	if (!config().oidc.enabled) throw new ErrorForbidden('OpenID Connect not enabled');
+
+	const { user: oidcUser, relayState } = await finishLogin(ctx);
+
+	const user = await ctx.joplin.models.user().ssoLogin(oidcUser.email, oidcUser.displayName, ctx.joplin.services, isAdmin(config().oidc, oidcUser));
+	if (!user) throw new ErrorForbidden(`Could not login using email "${oidcUser.email}"`);
+
+	if (relayState === 'app-login') {
+		await ctx.joplin.models.user().generateSsoCode(user);
+
+		const view = defaultView('displaySsoCode', 'Login');
+		view.content = {
+			ssoCode: user.sso_auth_code.replace(/\B(?=(\d{3})+(?!\d))/g, '-'),
+			organizationName: config().oidc.organizationDisplayName || undefined,
+		};
+		return view;
+	}
+
+	const session = await ctx.joplin.models.session().createUserSession(user.id);
+	cookieSet(ctx, 'sessionId', session.id);
+	return redirect(ctx, user.is_admin ? `${config().baseUrl}/admin/dashboard` : `${config().baseUrl}/home`);
 });
 
 router.get('api/login_with_code/:id', async (path: SubPath, ctx: AppContext) => {

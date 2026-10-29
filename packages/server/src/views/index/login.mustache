@@ -72,6 +72,21 @@
 		</div>
 	{{/samlEnabled}}
 
+	{{#oidcEnabled}}
+		<div class="columns">
+			<div class="column is-flex is-flex-direction-column is-justify-content-center">
+				<h2 class="title">Or use your organisation account</h2>
+				{{#oidcOrganizationName}}
+				<p class="subtitle">{{oidcOrganizationName}}</p>
+				{{/oidcOrganizationName}}
+
+				<a href="{{{global.baseUrl}}}/login/sso-oidc">
+					<button class="button is-primary">Login using your organisation account</button>
+				</a>
+			</div>
+		</div>
+	{{/oidcEnabled}}
+
 	{{#signupUrl}}
 		<div class="container block">
 			Or <a href="{{signupUrl}}">sign up</a> to create a new account.

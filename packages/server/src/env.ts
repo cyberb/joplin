@@ -16,6 +16,7 @@ const defaultEnvValues: EnvVariables = {
 
 	APP_NAME: 'Joplin Server',
 	APP_PORT: 22300,
+	APP_SOCKET: '',
 	SIGNUP_ENABLED: false,
 	TERMS_ENABLED: false,
 	ACCOUNT_TYPES_ENABLED: false,
@@ -188,6 +189,18 @@ const defaultEnvValues: EnvVariables = {
 	SAML_ORGANIZATION_DISPLAY_NAME: '', // The name of the organization to display on the login screen. Optional.
 
 	// ==================================================
+	// OpenID Connect configuration
+	// ==================================================
+
+	OIDC_ENABLED: false,
+	OIDC_ISSUER_URL: '',
+	OIDC_ISSUER_SOCKET: '',
+	OIDC_CLIENT_ID: '',
+	OIDC_CLIENT_SECRET: '',
+	OIDC_ADMIN_GROUP: '',
+	OIDC_ORGANIZATION_DISPLAY_NAME: '',
+
+	// ==================================================
 	// Transcribe Server
 	// ==================================================
 
@@ -199,6 +212,7 @@ const defaultEnvValues: EnvVariables = {
 export interface EnvVariables {
 	APP_NAME: string;
 	APP_PORT: number;
+	APP_SOCKET: string;
 	SIGNUP_ENABLED: boolean;
 	TERMS_ENABLED: boolean;
 	ACCOUNT_TYPES_ENABLED: boolean;
@@ -301,6 +315,14 @@ export interface EnvVariables {
 	SAML_IDP_CONFIG_FILE: string;
 	SAML_SP_CONFIG_FILE: string;
 	SAML_ORGANIZATION_DISPLAY_NAME: string;
+
+	OIDC_ENABLED: boolean;
+	OIDC_ISSUER_URL: string;
+	OIDC_ISSUER_SOCKET: string;
+	OIDC_CLIENT_ID: string;
+	OIDC_CLIENT_SECRET: string;
+	OIDC_ADMIN_GROUP: string;
+	OIDC_ORGANIZATION_DISPLAY_NAME: string;
 
 	LOCAL_AUTH_ENABLED: boolean;
 

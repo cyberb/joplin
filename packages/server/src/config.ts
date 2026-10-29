@@ -1,5 +1,5 @@
 import { rtrimSlashes } from '@joplin/lib/path-utils';
-import { Config, DatabaseConfig, DatabaseConfigClient, Env, MailerConfig, LdapConfig, RouteType, StripeConfig, SamlConfig } from './utils/types';
+import { Config, DatabaseConfig, DatabaseConfigClient, Env, MailerConfig, LdapConfig, RouteType, StripeConfig, SamlConfig, OidcConfig } from './utils/types';
 import * as pathUtils from 'path';
 import { loadStripeConfig, StripePublicConfig } from '@joplin/lib/utils/joplinCloud';
 import { EnvVariables } from './env';
@@ -165,8 +165,20 @@ function samlConfigFromEnv(env: EnvVariables): SamlConfig {
 	}
 }
 
+function oidcConfigFromEnv(env: EnvVariables): OidcConfig {
+	return {
+		enabled: !!env.OIDC_ENABLED,
+		issuerUrl: env.OIDC_ENABLED ? rtrimSlashes(env.OIDC_ISSUER_URL) : '',
+		issuerSocket: env.OIDC_ENABLED ? env.OIDC_ISSUER_SOCKET : '',
+		clientId: env.OIDC_ENABLED ? env.OIDC_CLIENT_ID : '',
+		clientSecret: env.OIDC_ENABLED ? env.OIDC_CLIENT_SECRET : '',
+		adminGroup: env.OIDC_ENABLED ? env.OIDC_ADMIN_GROUP : '',
+		organizationDisplayName: env.OIDC_ENABLED ? env.OIDC_ORGANIZATION_DISPLAY_NAME : '',
+	};
+}
+
 export const isUsingExternalAuth = (env: EnvVariables) => {
-	return !!env.SAML_ENABLED || !!env.LDAP_1_ENABLED || !!env.LDAP_2_ENABLED;
+	return !!env.SAML_ENABLED || !!env.OIDC_ENABLED || !!env.LDAP_1_ENABLED || !!env.LDAP_2_ENABLED;
 };
 
 const determineAppVersion = (isJoplinServerBusiness: boolean) => {
@@ -242,6 +254,7 @@ export async function initConfig(envType: Env, env: EnvVariables, overrides: any
 		maxTimeDrift: env.MAX_TIME_DRIFT,
 		ldap: ldapConfigFromEnv(env),
 		saml: samlConfigFromEnv(env),
+		oidc: oidcConfigFromEnv(env),
 		...overrides,
 	};
 }
