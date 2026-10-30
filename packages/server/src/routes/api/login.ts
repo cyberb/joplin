@@ -2,7 +2,7 @@ import config from '../../config';
 import Router from '../../utils/Router';
 import { redirect, SubPath } from '../../utils/routeUtils';
 import { generateRedirectHtml, getIdentityProvider, getServiceProvider } from '../../utils/saml';
-import { finishLogin, isAdmin } from '../../utils/oidc';
+import { finishLogin, isAdmin, startLogin } from '../../utils/oidc';
 import { AppContext, RouteType, SamlPostResponse } from '../../utils/types';
 import { bodyFields, userIp } from '../../utils/requestUtils';
 import { ErrorBadRequest, ErrorForbidden } from '../../utils/errors';
@@ -15,7 +15,8 @@ export const router = new Router(RouteType.Api);
 router.public = true;
 
 // Redirect the user to the Identity Provider login page, if they somehow get to this URL directly.
-router.get('api/saml', async (_path: SubPath, _ctx: AppContext) => {
+router.get('api/saml', async (_path: SubPath, ctx: AppContext) => {
+	if (!config().saml.enabled && config().oidc.enabled) return await startLogin(ctx, 'app-login');
 	if (!config().saml.enabled) throw new ErrorForbidden('SAML not enabled');
 	return await generateRedirectHtml();
 });
